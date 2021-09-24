@@ -9,7 +9,7 @@ def lambda_handler(event, context):
     logger.setLevel(logging.INFO)
     logger.info('event parameter: {}'.format(event))
     tmp_filename='/tmp/my_image.jpg'
-    gray_filename='my_image-gray.jpg'
+    edges_filename='my_image-edges.jpg'
 
     s3 = boto3.resource('s3')
     BUCKET_NAME = os.environ.get("BUCKET_NAME")
@@ -26,17 +26,19 @@ def lambda_handler(event, context):
         else:
             raise
 
-    image = cv2.imread(tmp_filename) 
-    image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    cv2.imwrite(tmp_filename, image_gray) 
+    image = cv2.imread(tmp_filename)
+    
+    E = cv2.Canny(image,150,200)
+
+    cv2.imwrite(tmp_filename, E) 
     
     s3 = boto3.client('s3')
-    s3.upload_file('/tmp/my_image.jpg',BUCKET_NAME,gray_filename)
+    s3.upload_file('/tmp/my_image.jpg',BUCKET_NAME,edges_filename)
 
     return {
         "statusCode": 200,
         "body": json.dumps({
-            "message": "image saved to s3://"+BUCKET_NAME+"/"+gray_filename,
+            "message": "image saved to s3://"+BUCKET_NAME+"/"+edges_filename,
         }),
     }
 
